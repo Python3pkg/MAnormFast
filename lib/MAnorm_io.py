@@ -3,7 +3,7 @@
 from numpy.ma import log2, log10
 import matplotlib
 
-from peaks import Peak, get_peaks_mavalues, get_peaks_normed_mavalues, \
+from .peaks import Peak, get_peaks_mavalues, get_peaks_normed_mavalues, \
     get_peaks_pvalues, _add_peaks, _sort_peaks_list
 
 matplotlib.use('Agg')
@@ -32,7 +32,7 @@ def _get_reads_position(reads_fp, shift):
                 position[chrm] = []
                 position[chrm].append(pos)
     # 返回排序后的reads的位点信息
-    return {key: sorted(position[key]) for key in position.keys()}
+    return {key: sorted(position[key]) for key in list(position.keys())}
 
 
 def _get_read_length(reads_fp):
@@ -143,13 +143,13 @@ def output_normalized_peaks(pks_unique, pks_common, file_name, rds1_name, rds2_n
                         'normalized_read_density_in_%s' % rds1_name, 'normalized_read_density_in_%s\n' % rds2_name])
     # fo.write(declaration)
     fo.write(header)
-    for chrm in pks_unique.keys():
+    for chrm in list(pks_unique.keys()):
         for pk in pks_unique[chrm]:
             cnt = (pk.chrm, pk.start, pk.end, pk.summit - pk.start,
                    pk.normed_mvalue, pk.normed_avalue, str(pk.pvalue), 'unique',
                    pk.normed_read_density1, pk.read_density2,)
             fo.write('\t'.join(['%s', '%d', '%d', '%d', '%f', '%f', '%s', '%s', '%f', '%f']) % cnt + '\n')
-    for chrm in pks_common.keys():
+    for chrm in list(pks_common.keys()):
         for pk in pks_common[chrm]:
             cnt = (pk.chrm, pk.start, pk.end, pk.summit - pk.start,
                    pk.normed_mvalue, pk.normed_avalue, str(pk.pvalue), 'common',
@@ -168,19 +168,19 @@ def output_3set_normalized_peaks(pks1_unique, merged_pks, pks2_unique, file_name
                         'normalized_read_density_in_%s' % rds1_name, 'normalized_read_density_in_%s\n' % rds2_name])
     # fo.write(declaration)
     fo.write(header)
-    for chrm in pks1_unique.keys():
+    for chrm in list(pks1_unique.keys()):
         for pk in pks1_unique[chrm]:
             cnt = (pk.chrm, pk.start, pk.end, pk.summit - pk.start,
                    pk.normed_mvalue, pk.normed_avalue, str(pk.pvalue), '%s_unique' % pks1_name,
                    pk.normed_read_density1, pk.read_density2)
             fo.write('\t'.join(['%s', '%d', '%d', '%d', '%f', '%f', '%s', '%s', '%f', '%f']) % cnt + '\n')
-    for chrm in merged_pks.keys():
+    for chrm in list(merged_pks.keys()):
         for pk in merged_pks[chrm]:
             cnt = (pk.chrm, pk.start, pk.end, pk.summit - pk.start,
                    pk.normed_mvalue, pk.normed_avalue, str(pk.pvalue), 'merged_common_peak',
                    pk.normed_read_density1, pk.read_density2)
             fo.write('\t'.join(['%s', '%d', '%d', '%d', '%f', '%f', '%s', '%s', '%f', '%f']) % cnt + '\n')
-    for chrm in pks2_unique.keys():
+    for chrm in list(pks2_unique.keys()):
         for pk in pks2_unique[chrm]:
             cnt = (pk.chrm, pk.start, pk.end, pk.summit - pk.start,
                    pk.normed_mvalue, pk.normed_avalue, str(pk.pvalue), '%s_unique' % pks2_name,
@@ -225,7 +225,7 @@ def draw_figs_to_show_data(pks1_uni, pks2_uni, merged_pks, pks1_name, pks2_name,
     rd_min = 1000
     rd_max = 0
     rds_density1, rds_density2 = [], []
-    for key in merged_pks.keys():
+    for key in list(merged_pks.keys()):
         for pk in merged_pks[key]:
             rds_density1.append(pk.read_density1), rds_density2.append(pk.read_density2)
     rd_max = max(max(log2(rds_density1)), rd_max)
@@ -275,7 +275,7 @@ def output_peaks_mvalue_2wig_file(pks1_uni, pks2_uni, merged_pks, comparison_nam
     """
     output of peaks with normed m value and p values
     """
-    print 'output wig files ... '
+    print('output wig files ... ')
 
     peaks = _add_peaks(_add_peaks(pks1_uni, merged_pks), pks2_uni)
     f_2write = open('_'.join([comparison_name, 'peaks_Mvalues.wig']), 'w')
@@ -283,7 +283,7 @@ def output_peaks_mvalue_2wig_file(pks1_uni, pks2_uni, merged_pks, comparison_nam
     f_2write.write('track type=wiggle_0 name=%s' % comparison_name +
                    ' visibility=full autoScale=on color=255,0,0 ' +
                    ' yLineMark=0 yLineOnOff=on priority=10\n')
-    for chr_id in peaks.keys():
+    for chr_id in list(peaks.keys()):
         f_2write.write('variableStep chrom=' + chr_id + ' span=100\n')
         pks_chr = peaks[chr_id]
         sorted_pks_chr = _sort_peaks_list(pks_chr, 'summit')
@@ -296,7 +296,7 @@ def output_peaks_mvalue_2wig_file(pks1_uni, pks2_uni, merged_pks, comparison_nam
     f_2write.write('track type=wiggle_0 name=%s(-log10(p-value))' % comparison_name +
                    ' visibility=full autoScale=on color=255,0,0 ' +
                    ' yLineMark=0 yLineOnOff=on priority=10\n')
-    for chr_id in peaks.keys():
+    for chr_id in list(peaks.keys()):
         f_2write.write('variableStep chrom=' + chr_id + ' span=100\n')
         pks_chr = peaks[chr_id]
         sorted_pks_chr = _sort_peaks_list(pks_chr, 'summit')
@@ -309,7 +309,7 @@ def output_unbiased_peaks(pks1_uni, pks2_uni, merged_pks, unbiased_mvalue, overl
     """
     输出没有显著差异的peak
     """
-    print 'define unbiased peaks: '
+    print('define unbiased peaks: ')
 
     if not overlap_dependent:
         pks = _add_peaks(_add_peaks(pks1_uni, merged_pks), pks2_uni)
@@ -321,14 +321,14 @@ def output_unbiased_peaks(pks1_uni, pks2_uni, merged_pks, unbiased_mvalue, overl
     file_bed = open('unbiased_peaks_of_%s' % name + '.bed', 'w')
     # file_bed.write(bed_peak_header)
     i = 0
-    for key in pks.keys():
+    for key in list(pks.keys()):
         for pk in pks[key]:
             if abs(pk.normed_mvalue) < unbiased_mvalue:
                 i += 1
                 line = '\t'.join([pk.chrm, '%d' % pk.start, '%d' % pk.end, 'from_%s_%d' % (name, i),
                                   '%s\n' % str(pk.normed_mvalue)])
                 file_bed.write(line)
-    print 'filter %d unbiased peaks' % i
+    print('filter %d unbiased peaks' % i)
     file_bed.close()
 
 
@@ -336,7 +336,7 @@ def output_biased_peaks(pks1_uni, pks2_uni, merged_pks, biased_mvalue, biased_pv
     """
     输出有显著差异的peaks
     """
-    print 'define biased peaks:'
+    print('define biased peaks:')
 
     if not overlap_dependent:
         pks = _add_peaks(_add_peaks(pks1_uni, merged_pks), pks2_uni)
@@ -350,7 +350,7 @@ def output_biased_peaks(pks1_uni, pks2_uni, merged_pks, biased_mvalue, biased_pv
     file_bed_less = open('M_less_-%.2f_biased_peaks_of_%s' % (biased_mvalue, name) + '.bed', 'w')
     # file_bed_less.write(bed_peak_header)
     i, j = 0, 0
-    for key in pks.keys():
+    for key in list(pks.keys()):
         for pk in pks[key]:
             if pk.pvalue < biased_pvalue:
                 if pk.normed_mvalue > biased_mvalue:
@@ -363,19 +363,19 @@ def output_biased_peaks(pks1_uni, pks2_uni, merged_pks, biased_mvalue, biased_pv
                     line = '\t'.join([pk.chrm, '%d' % pk.start, '%d' % pk.end, 'from_%s_%d' % (name, j),
                                       '%s\n' % str(pk.normed_mvalue)])
                     file_bed_less.write(line)
-    print 'filter %d biased peaks' % (i + j)
+    print('filter %d biased peaks' % (i + j))
     file_bed_over.close(), file_bed_less.close()
 
 
 def test_read_reads():
     pos, leng = read_reads('1-reads.bed', 100)
-    print leng
+    print(leng)
 
 
 def test_read_peaks():
     pks = _read_peaks('1_peaks')
-    print pks.keys()
-    print 'Done.'
+    print(list(pks.keys()))
+    print('Done.')
 
 
 if __name__ == '__main__':
@@ -388,4 +388,4 @@ if __name__ == '__main__':
     test_read_reads()
 
     consumption_time = time.clock() - start_time
-    print consumption_time
+    print(consumption_time)
